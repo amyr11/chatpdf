@@ -21,7 +21,34 @@ def chat_message(name):
     return st.container(key=f"{name}-{uuid.uuid4()}").chat_message(name=name)
 
 
-docs_processed = False
+def upload_files():
+    all_docs = utils.load_pdfs(st.session_state.used_files)
+    st.session_state.all_docs = all_docs
+    return all_docs
+
+
+def chunk():
+    docs_chunked = utils.chunk(
+        st.session_state.all_docs,
+        st.session_state.used_chunk_size,
+        st.session_state.used_chunk_overlap,
+    )
+    st.session_state.docs_chunked = docs_chunked
+    time.sleep(1)
+    return docs_chunked
+
+
+def embed():
+    vector_store = utils.get_vectorstore(st.session_state.docs_chunked)
+    st.session_state.vector_store = vector_store
+    return vector_store
+
+
+st.session_state.setdefault("last_uploaded_files", [])
+st.session_state.setdefault("used_files", [])
+st.session_state.setdefault("docs_ready", False)
+
+rerun = False
 
 # Sidebar
 with st.sidebar:
@@ -34,6 +61,37 @@ with st.sidebar:
         4,
         help="Determines how many top text chunks will be retrieved based on similarity to the user's query. Higher values increase recall but may include less relevant results.",
     )
+    splitter_chunk_size = st.slider(
+        "Chunk size",
+        1,
+        2000,
+        1000,
+        help="Determines the size of each split.",
+    )
+    splitter_chunk_overlap = st.slider(
+        "Chunk overlap",
+        1,
+        splitter_chunk_size - 1,
+        splitter_chunk_size // 4,
+        help="Determines the size of each split.",
+    )
+
+    st.session_state.setdefault("last_k", retriever_k)
+    st.session_state.setdefault("last_chunk_size", splitter_chunk_size)
+    st.session_state.setdefault("used_chunk_size", None)
+    st.session_state.setdefault("last_chunk_overlap", splitter_chunk_overlap)
+    st.session_state.setdefault("used_chunk_overlap", None)
+
+    if (
+        st.session_state.last_k != retriever_k
+        or st.session_state.last_chunk_size != splitter_chunk_size
+        or st.session_state.last_chunk_overlap != splitter_chunk_overlap
+    ):
+        if st.button("Save changes"):
+            st.session_state.last_k = retriever_k
+            st.session_state.last_chunk_size = splitter_chunk_size
+            st.session_state.last_chunk_overlap = splitter_chunk_overlap
+            rerun = True
 
     st.divider()
 
@@ -44,32 +102,61 @@ with st.sidebar:
         type="pdf",
     )
 
-    if uploaded_files:
+    if st.session_state.last_uploaded_files != uploaded_files:
+        st.session_state.last_uploaded_files = uploaded_files
+
+        if not st.session_state.last_uploaded_files:
+            st.session_state.used_files = []
+
+    if rerun:
+        st.rerun()
+        rerun = False
+
+    if st.session_state.last_uploaded_files:
+        files_changed = False
+
         # Extract texts and create documents
-        with st.spinner("Uploading...", show_time=True):
-            all_docs = utils.load_pdfs(uploaded_files)
-            st.success(f"{len(all_docs)} file(s) uploaded")
+        if st.session_state.used_files != st.session_state.last_uploaded_files:
+            with st.spinner("Uploading...", show_time=True):
+                files_changed = True
+                st.session_state.used_files = st.session_state.last_uploaded_files
+                all_docs = upload_files()
+                st.success(f"{len(all_docs)} file(s) uploaded")
 
-        # Chunk documents
-        with st.spinner("Chunking documents...", show_time=True):
-            docs_chunked = utils.chunk(all_docs)
-            time.sleep(1)
-            st.success(f"Documents chunked into {len(docs_chunked)} documents")
+        if (
+            files_changed
+            or st.session_state.used_chunk_size != st.session_state.last_chunk_size
+            or st.session_state.used_chunk_overlap
+            != st.session_state.last_chunk_overlap
+        ):
+            # Chunk documents
+            with st.spinner("Chunking documents...", show_time=True):
+                st.session_state.used_chunk_size = st.session_state.last_chunk_size
+                st.session_state.used_chunk_overlap = (
+                    st.session_state.last_chunk_overlap
+                )
+                docs_chunked = chunk()
+                st.success(
+                    f"Documents chunked into {len(docs_chunked)} documents using chunk size: {splitter_chunk_size} and chunk overlap: {splitter_chunk_overlap}"
+                )
 
-        # Embed and store in Chroma
-        with st.spinner("Calculating embeddings...", show_time=True):
-            vector_store = utils.get_vectorstore(docs_chunked)
-            docs_processed = True
-            st.success(f"Embeddings stored in Chroma")
+            # Embed and store in Chroma
+            with st.spinner("Calculating embeddings...", show_time=True):
+                vector_store = embed()
+                st.success(f"Embeddings stored in Chroma")
+
+        files_changed = False
+        st.session_state.docs_ready = True
     else:
-        docs_processed = False
+        if "vector_store" not in st.session_state:
+            st.session_state.docs_ready = False
 
 st.title("ChatPDF 🤖 📑")
 
 # Display filenames of uploaded files
 badges = ""
-if docs_processed:
-    for file in uploaded_files:
+if st.session_state.docs_ready:
+    for file in st.session_state.used_files:
         badge = ":green-badge[:material/check: {title}]"
         badges += badge.format(title=file.name) + " "
     st.markdown(badges)
