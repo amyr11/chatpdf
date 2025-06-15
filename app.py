@@ -1,5 +1,7 @@
 import streamlit as st
 import uuid
+import utils
+import time
 
 st.set_page_config("ChatPDF", "📑")
 st.html(
@@ -18,6 +20,8 @@ st.html(
 def chat_message(name):
     return st.container(key=f"{name}-{uuid.uuid4()}").chat_message(name=name)
 
+
+docs_processed = False
 
 # Sidebar
 with st.sidebar:
@@ -40,14 +44,35 @@ with st.sidebar:
         type="pdf",
     )
 
+    if uploaded_files:
+        # Extract texts and create documents
+        with st.spinner("Uploading...", show_time=True):
+            all_docs = utils.load_pdfs(uploaded_files)
+            st.success(f"{len(all_docs)} file(s) uploaded")
+
+        # Chunk documents
+        with st.spinner("Chunking documents...", show_time=True):
+            docs_chunked = utils.chunk(all_docs)
+            time.sleep(1)
+            st.success(f"Documents chunked into {len(docs_chunked)} documents")
+
+        # Embed and store in Chroma
+        with st.spinner("Calculating embeddings...", show_time=True):
+            vector_store = utils.get_vectorstore(docs_chunked)
+            docs_processed = True
+            st.success(f"Embeddings stored in Chroma")
+    else:
+        docs_processed = False
+
 st.title("ChatPDF 🤖 📑")
 
 # Display filenames of uploaded files
 badges = ""
-for file in uploaded_files:
-    badge = ":green-badge[:material/check: {title}]"
-    badges += badge.format(title=file.name) + " "
-st.markdown(badges)
+if docs_processed:
+    for file in uploaded_files:
+        badge = ":green-badge[:material/check: {title}]"
+        badges += badge.format(title=file.name) + " "
+    st.markdown(badges)
 
 # Initialize chat history
 if "messages" not in st.session_state:
