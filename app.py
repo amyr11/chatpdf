@@ -1,7 +1,7 @@
 import streamlit as st
 import uuid
-import utils
 import time
+from model import LangChainRAG
 
 st.set_page_config("ChatPDF", "📑")
 st.html(
@@ -16,19 +16,27 @@ st.html(
     """
 )
 
+if "rag_model" not in st.session_state:
+    st.session_state.rag_model = LangChainRAG()
+
+st.session_state.setdefault("last_uploaded_files", [])
+st.session_state.setdefault("used_files", [])
+
+rerun = False
+
 
 def chat_message(name):
     return st.container(key=f"{name}-{uuid.uuid4()}").chat_message(name=name)
 
 
 def upload_files():
-    all_docs = utils.load_pdfs(st.session_state.used_files)
+    all_docs = st.session_state.rag_model.get_docs(st.session_state.used_files)
     st.session_state.all_docs = all_docs
     return all_docs
 
 
 def chunk():
-    docs_chunked = utils.chunk(
+    docs_chunked = st.session_state.rag_model.chunk(
         st.session_state.all_docs,
         st.session_state.used_chunk_size,
         st.session_state.used_chunk_overlap,
@@ -38,17 +46,12 @@ def chunk():
     return docs_chunked
 
 
-def embed():
-    vector_store = utils.get_vectorstore(st.session_state.docs_chunked)
+def embed_store():
+    vector_store = st.session_state.rag_model.embed_store(st.session_state.docs_chunked)
     st.session_state.vector_store = vector_store
+    time.sleep(1)
     return vector_store
 
-
-st.session_state.setdefault("last_uploaded_files", [])
-st.session_state.setdefault("used_files", [])
-st.session_state.setdefault("docs_ready", False)
-
-rerun = False
 
 # Sidebar
 with st.sidebar:
@@ -109,6 +112,7 @@ with st.sidebar:
             st.session_state.used_files = []
 
     if rerun:
+        print("RERUNNING")
         st.rerun()
         rerun = False
 
@@ -142,20 +146,16 @@ with st.sidebar:
 
             # Embed and store in Chroma
             with st.spinner("Calculating embeddings...", show_time=True):
-                vector_store = embed()
+                vector_store = embed_store()
                 st.success(f"Embeddings stored in Chroma")
 
         files_changed = False
-        st.session_state.docs_ready = True
-    else:
-        if "vector_store" not in st.session_state:
-            st.session_state.docs_ready = False
 
 st.title("ChatPDF 🤖 📑")
 
 # Display filenames of uploaded files
 badges = ""
-if st.session_state.docs_ready:
+if st.session_state.used_files:
     for file in st.session_state.used_files:
         badge = ":green-badge[:material/check: {title}]"
         badges += badge.format(title=file.name) + " "
