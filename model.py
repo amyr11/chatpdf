@@ -12,6 +12,9 @@ class LangChainRAG:
     def __init__(self, model="llama-3.3-70b-versatile", model_provider="groq"):
         self.model = model
         self.model_provider = model_provider
+        self.docs = None
+        self.chunked_docs = None
+        self.vectorstore = None
 
         self.llm = init_chat_model(self.model, model_provider=self.model_provider)
         self.embeddings = HuggingFaceEmbeddings(
@@ -29,3 +32,8 @@ class LangChainRAG:
     def embed_store(self, docs):
         self.vectorstore = utils.get_vectorstore
         return self.vectorstore
+
+    def clear_docs(self):
+        self.docs = None
+        self.chunked_docs = None
+        self.vectorstore = None

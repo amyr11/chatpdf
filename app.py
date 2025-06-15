@@ -110,6 +110,7 @@ with st.sidebar:
 
         if not st.session_state.last_uploaded_files:
             st.session_state.used_files = []
+            st.session_state.rag_model.clear_docs()
 
     if rerun:
         print("RERUNNING")
