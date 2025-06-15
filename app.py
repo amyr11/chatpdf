@@ -46,7 +46,9 @@ def embed():
 
 st.session_state.setdefault("last_uploaded_files", [])
 st.session_state.setdefault("used_files", [])
-st.session_state.setdefault("docs_ready", False)
+st.session_state.setdefault("llm", None)
+st.session_state.setdefault("vector_store", None)
+st.session_state.setdefault("graph", None)
 
 rerun = False
 
@@ -146,16 +148,12 @@ with st.sidebar:
                 st.success(f"Embeddings stored in Chroma")
 
         files_changed = False
-        st.session_state.docs_ready = True
-    else:
-        if "vector_store" not in st.session_state:
-            st.session_state.docs_ready = False
 
 st.title("ChatPDF 🤖 📑")
 
 # Display filenames of uploaded files
 badges = ""
-if st.session_state.docs_ready:
+if st.session_state.vector_store:
     for file in st.session_state.used_files:
         badge = ":green-badge[:material/check: {title}]"
         badges += badge.format(title=file.name) + " "
