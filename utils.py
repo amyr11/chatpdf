@@ -49,7 +49,7 @@ def chunk(docs, chunk_size=1000, chunk_overlap=250):
     return docs_chunked
 
 
-def get_vectorstore(docs):
+def get_vectorstore(docs, collection_name):
     """
     Creates a vector store from a list of documents.
 
@@ -65,6 +65,8 @@ def get_vectorstore(docs):
     embeddings = HuggingFaceEmbeddings(
         model_name="sentence-transformers/all-mpnet-base-v2"
     )
-    vector_store = Chroma.from_documents(docs, embeddings)
+    vector_store = Chroma.from_documents(
+        docs, embeddings, collection_name=collection_name
+    )
 
     return vector_store
