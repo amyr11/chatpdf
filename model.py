@@ -20,7 +20,7 @@ class LangChainRAG:
     def __init__(
         self,
         thread_id,
-        model="meta-llama/llama-4-scout-17b-16e-instruct",
+        model="llama-3.3-70b-versatile",
         model_provider="groq",
     ):
         self.thread_id = thread_id
@@ -69,7 +69,7 @@ class LangChainRAG:
     def get_graph(self):
         @tool(
             response_format="content_and_artifact",
-            description="Retrieve information related to a query or task only when needed.",
+            description="Retrieve information related to a query or task.",
         )
         def retrieve(query: str, config: RunnableConfig):
             vector_store = config["configurable"].get("vector_store")
@@ -106,8 +106,10 @@ class LangChainRAG:
             system_message_content = (
                 "Your name is ChatPDF, you are created by Amyr. "
                 "You are an assistant for question-answering tasks. "
+                "You are given a set of documents which you will use to answer user queries or task. "
+                "You will not answer on your own. "
                 "Use the following pieces of retrieved context to answer "
-                "the question. If you don't know the answer, say that you "
+                "the question or do the task. If you don't know the answer, say that you "
                 "don't know. Use three sentences maximum and keep the "
                 "answer concise. "
                 "If presenting a long or structured output, use markdown. "

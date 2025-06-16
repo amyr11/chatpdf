@@ -18,7 +18,7 @@ def load_pdfs(files):
     all_docs = []
 
     def clean_text(text):
-        return " ".join(text.replace("\n", " ").split())
+        return " ".join(text.split())
 
     for file in files:
         filename = file.name
