@@ -17,12 +17,15 @@ def load_pdfs(files):
 
     all_docs = []
 
+    def clean_text(text):
+        return " ".join(text.replace("\n", " ").split())
+
     for file in files:
         filename = file.name
         reader = PdfReader(file)
         text = ""
         for page in reader.pages:
-            text += page.extract_text()
+            text += clean_text(page.extract_text())
         doc = Document(
             id=filename,
             page_content=text,

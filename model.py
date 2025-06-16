@@ -152,13 +152,14 @@ class LangChainRAG:
         return self.chunked_docs
 
     def embed_store(self, docs):
-        # Reset collection if exists
         if self.vector_store:
-            self.vector_store.reset_collection()
+            self.vector_store._client.delete_collection(self.thread_id)
         self.vector_store = utils.get_vectorstore(docs, self.thread_id)
         return self.vector_store
 
     def clear_docs(self):
         self.docs = None
         self.chunked_docs = None
+        if self.vector_store:
+            self.vector_store._client.delete_collection(self.thread_id)
         self.vector_store = None
