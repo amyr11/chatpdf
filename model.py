@@ -106,8 +106,7 @@ class LangChainRAG:
             system_message_content = (
                 "Your name is ChatPDF, you are created by Amyr. "
                 "You are an assistant for question-answering tasks. "
-                "You are given a set of documents which you will use to answer user queries or task. "
-                "You will not answer on your own. "
+                "You are given a set of documents which you will use to answer user queries or task that needs information. "
                 "Use the following pieces of retrieved context to answer "
                 "the question or do the task. If you don't know the answer, say that you "
                 "don't know. Use three sentences maximum and keep the "
