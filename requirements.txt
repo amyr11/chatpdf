@@ -8,3 +8,4 @@ langchain-huggingface
 langchain-text-splitters
 langgraph
 python-dotenv
+sentence-transformers
