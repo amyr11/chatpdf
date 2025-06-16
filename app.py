@@ -1,3 +1,4 @@
+import time
 import streamlit as st
 import uuid
 import time
@@ -189,6 +190,13 @@ for message in st.session_state.messages:
         with st.expander("Show context"):
             st.write(message["context"])
 
+
+def create_streamer(str):
+    for word in str.split(" "):
+        yield word + " "
+        time.sleep(0.02)
+
+
 # Input message
 if prompt := st.chat_input("Ask ChatPDF"):
     # Display user message
@@ -207,7 +215,8 @@ if prompt := st.chat_input("Ask ChatPDF"):
         response = "Please upload files first"
     # Display chatbot response
     with chat_message("assistant"):
-        st.markdown(response)
+        response_streamer = create_streamer(response)
+        st.write_stream(response_streamer)
 
     # Show context in a collapsible if available
     if context:
