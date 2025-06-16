@@ -141,7 +141,7 @@ with st.sidebar:
     )
 
     st.session_state.setdefault("last_k", retriever_k)
-    st.session_state.setdefault("used_k", None)
+    st.session_state.setdefault("used_k", retriever_k)
     st.session_state.setdefault("last_chunk_size", splitter_chunk_size)
     st.session_state.setdefault("used_chunk_size", None)
     st.session_state.setdefault("last_chunk_overlap", splitter_chunk_overlap)
@@ -177,6 +177,13 @@ with st.sidebar:
     if rerun:
         st.rerun()
         rerun = False
+
+    if st.session_state.used_k != st.session_state.last_k:
+        st.session_state.used_k = st.session_state.last_k
+        st.session_state.config["configurable"]["retrieval_k"] = st.session_state.used_k
+        st.success(
+            f"The model will now retrieve the top {st.session_state.used_k} document(s)"
+        )
 
     if st.session_state.last_uploaded_files:
         files_changed = False
@@ -229,9 +236,8 @@ with st.sidebar:
             )
             def retrieve(query: str, config: RunnableConfig):
                 vs = config["configurable"].get("vector_store")
-                retrieved_docs = vs.similarity_search(
-                    query, k=4  # TODO: replace with session state
-                )
+                k = config["configurable"].get("retrieval_k")
+                retrieved_docs = vs.similarity_search(query, k=k)
                 serialized = "\n\n".join(
                     (f"Source: {doc.metadata}\n" f"Content: {doc.page_content}")
                     for doc in retrieved_docs
