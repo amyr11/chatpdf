@@ -80,7 +80,7 @@ with st.sidebar:
         1,
         splitter_chunk_size - 1,
         splitter_chunk_size // 4,
-        help="Determines the size of each split.",
+        help="Determines the size of overlap for each split.",
     )
 
     st.session_state.setdefault("last_k", retriever_k)
