@@ -226,3 +226,4 @@ xxhash
 yarl
 zipp
 zstandard
+pysqlite3-binary
