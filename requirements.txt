@@ -10,3 +10,4 @@ langgraph
 python-dotenv
 sentence-transformers
 pypdf
+chromadb
