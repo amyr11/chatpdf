@@ -109,7 +109,8 @@ class LangChainRAG:
                 "Use the following pieces of retrieved context to answer "
                 "the question. If you don't know the answer, say that you "
                 "don't know. Use three sentences maximum and keep the "
-                "answer concise."
+                "answer concise. "
+                "If presenting a long or structured output, use markdown. "
                 "\n\n"
                 f"{docs_content}"
             )
