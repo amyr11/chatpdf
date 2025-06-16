@@ -9,3 +9,4 @@ langchain-text-splitters
 langgraph
 python-dotenv
 sentence-transformers
+pypdf
