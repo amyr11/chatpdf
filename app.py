@@ -185,7 +185,7 @@ for message in st.session_state.messages:
     with chat_message(message["role"]):
         st.markdown(message["content"])
     # Show context in a collapsible if available
-    if "context" in message:
+    if "context" in message and message["context"]:
         with st.expander("Show context"):
             st.write(message["context"])
 

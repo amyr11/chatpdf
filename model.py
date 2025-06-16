@@ -58,9 +58,8 @@ class LangChainRAG:
         return response["messages"][-1].content
 
     def parse_tool_call(self, response):
-        latest_tool_message = next(
-            (m for m in reversed(response["messages"]) if m.type == "tool"), None
-        )
+        last_message = response["messages"][-2]
+        latest_tool_message = last_message if last_message.type == "tool" else None
 
         if latest_tool_message:
             return latest_tool_message.content
@@ -70,13 +69,15 @@ class LangChainRAG:
     def get_graph(self):
         @tool(
             response_format="content_and_artifact",
-            description="Retrieve information related to a query.",
+            description="Retrieve information related to a query or task only when needed.",
         )
         def retrieve(query: str, config: RunnableConfig):
             vector_store = config["configurable"].get("vector_store")
             retrieved_docs = vector_store.similarity_search(query, k=self.retrieval_k)
             serialized = "\n\n----------\n\n".join(
-                (f"Source: {doc.metadata["source"]}\nContent: {doc.page_content}")
+                (
+                    f"Source:  \n{doc.metadata["source"]}  \n  \nContent:  \n{doc.page_content}"
+                )
                 for doc in retrieved_docs
             )
             return serialized, retrieved_docs
